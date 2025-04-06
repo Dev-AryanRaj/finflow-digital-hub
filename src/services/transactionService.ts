@@ -7,13 +7,30 @@ export async function getTransactions(userId: string, options?: {
   type?: 'all' | 'credit' | 'debit',
   dateRange?: 'all' | 'week' | 'month' | 'year',
   page?: number,
-  limit?: number
+  limit?: number,
+  accountId?: string
 }) {
   try {
     await connectToDatabase();
     const transactionsCollection = getCollection('transactions');
     
-    const query: any = { userId };
+    const query: any = {};
+    
+    // Add userId filter only if provided (to allow filtering by accountId only)
+    if (userId) {
+      query.userId = userId;
+    }
+    
+    // Add accountId filter if provided
+    if (options?.accountId) {
+      query.accountId = options.accountId;
+    }
+    
+    // We must have either userId or accountId
+    if (!userId && !options?.accountId) {
+      throw new Error('Either userId or accountId must be provided');
+    }
+    
     const limit = options?.limit || 10;
     const skip = ((options?.page || 1) - 1) * limit;
     

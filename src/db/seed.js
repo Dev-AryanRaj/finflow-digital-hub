@@ -26,6 +26,7 @@ async function seedDatabase() {
     // Clear existing collections
     await db.collection('users').deleteMany({});
     await db.collection('transactions').deleteMany({});
+    await db.collection('accounts').deleteMany({});
     
     // Create users
     const users = [
@@ -70,8 +71,57 @@ async function seedDatabase() {
     const result = await db.collection('users').insertMany(users);
     console.log(`${result.insertedCount} users inserted`);
     
-    // Create transactions for John Doe
+    // Create accounts for John Doe
     const johnDoe = users[0];
+    const accounts = [
+      {
+        id: uuidv4(),
+        userId: johnDoe.id,
+        accountNumber: '1234567890',
+        accountType: 'checking',
+        balance: 5240.75,
+        currency: 'USD',
+        status: 'active',
+        name: 'Primary Checking',
+        isDefault: true,
+        minimumBalance: 100,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        userId: johnDoe.id,
+        accountNumber: '0987654321',
+        accountType: 'savings',
+        balance: 12750.50,
+        currency: 'USD',
+        status: 'active',
+        name: 'Savings Account',
+        isDefault: false,
+        interestRate: 2.5,
+        minimumBalance: 500,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        userId: johnDoe.id,
+        accountNumber: '5678901234',
+        accountType: 'investment',
+        balance: 32000.00,
+        currency: 'USD',
+        status: 'active',
+        name: 'Investment Portfolio',
+        isDefault: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    const acctResult = await db.collection('accounts').insertMany(accounts);
+    console.log(`${acctResult.insertedCount} accounts inserted`);
+    
+    // Create transactions for John Doe
     const transactions = [];
     
     // Transaction categories
@@ -116,6 +166,7 @@ async function seedDatabase() {
       
       const categoryIndex = Math.floor(Math.random() * categories.length);
       const counterpartyIndex = Math.floor(Math.random() * counterparties.length);
+      const accountIndex = Math.floor(Math.random() * accounts.length);
       
       transactions.push({
         id: uuidv4(),
@@ -130,7 +181,7 @@ async function seedDatabase() {
         status: Math.random() > 0.9 ? 'pending' : 'completed', // 10% pending
         counterparty: counterparties[counterpartyIndex],
         reference: `REF-${Math.floor(Math.random() * 1000000)}`,
-        accountId: 'ACCT-' + johnDoe.id.substring(0, 8),
+        accountId: accounts[accountIndex].id,
         createdAt: date,
         updatedAt: date
       });

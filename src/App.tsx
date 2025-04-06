@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,8 @@ import DashboardPage from "./pages/customer/DashboardPage";
 import TellerDashboardPage from "./pages/teller/TellerDashboardPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import TransactionsPage from "./pages/TransactionsPage";
+import AccountsPage from "./pages/AccountsPage";
+import AccountDetailsPage from "./pages/customer/AccountDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -127,7 +130,18 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="CUSTOMER">
             <MainLayout>
-              <div>Accounts Page</div>
+              <AccountsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/accounts/:accountId" 
+        element={
+          <ProtectedRoute requiredRole="CUSTOMER">
+            <MainLayout>
+              <AccountDetailsPage />
             </MainLayout>
           </ProtectedRoute>
         } 

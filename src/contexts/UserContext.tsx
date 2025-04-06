@@ -1,15 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export type UserRole = 'CUSTOMER' | 'TELLER';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  profileUrl?: string;
-}
+import { User, UserRole } from '../models/User';
+import { authenticateUser, findUserByEmail } from '../services/userService';
 
 interface UserContextType {
   user: User | null;
@@ -26,37 +18,25 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user data for development
-  const mockCustomer: User = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    role: 'CUSTOMER',
-    profileUrl: 'https://i.pravatar.cc/150?u=john.doe@example.com'
-  };
-
-  const mockTeller: User = {
-    id: '2',
-    name: 'Admin User',
-    email: 'admin@finflow.com',
-    role: 'TELLER',
-    profileUrl: 'https://i.pravatar.cc/150?u=admin@finflow.com'
-  };
-
-  // For development only - simulate authentication check
+  // Check if user session exists on component mount
   useEffect(() => {
-    // Simulate API call to check authentication
     const checkAuth = async () => {
       try {
-        // Simulate delay for API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For development, set the user or leave as null
-        // In production, this would check with your backend
-        setUser(mockCustomer);
+        // In a real app, this would check a JWT token or session cookie
+        const storedUser = localStorage.getItem('bankapp_user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          // Verify user still exists in database
+          const dbUser = await findUserByEmail(parsedUser.email);
+          if (dbUser) {
+            setUser(dbUser);
+          } else {
+            // User no longer exists in DB, clear local storage
+            localStorage.removeItem('bankapp_user');
+          }
+        }
       } catch (error) {
         console.error('Authentication check failed:', error);
-        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -68,14 +48,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock login logic
-      if (email === 'admin@finflow.com') {
-        setUser(mockTeller);
+      const authenticatedUser = await authenticateUser({ email, password });
+      if (authenticatedUser) {
+        setUser(authenticatedUser);
+        // Store user in local storage for persistence
+        localStorage.setItem('bankapp_user', JSON.stringify(authenticatedUser));
       } else {
-        setUser(mockCustomer);
+        throw new Error('Invalid credentials');
       }
     } catch (error) {
       console.error('Login failed:', error);
@@ -89,9 +68,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       // This would integrate with the Google OAuth flow
-      // For now we just simulate success
+      // For now we just simulate success with a delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setUser(mockCustomer);
+      throw new Error('Google login not implemented yet');
     } catch (error) {
       console.error('Google login failed:', error);
       throw new Error('Google login failed. Please try again.');
@@ -102,6 +81,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('bankapp_user');
   };
   
   return (

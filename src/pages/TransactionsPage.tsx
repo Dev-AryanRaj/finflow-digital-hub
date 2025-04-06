@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { 
   Calendar, 
@@ -12,6 +12,9 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useQuery } from '@tanstack/react-query';
+import { getTransactions } from '@/services/transactionService';
+import { Transaction } from '@/models/Transaction';
 
 import {
   Card,
@@ -50,186 +53,40 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-type Transaction = {
-  id: string;
-  date: Date;
-  description: string;
-  amount: number;
-  type: 'credit' | 'debit';
-  category: string;
-  status: 'pending' | 'completed' | 'failed';
-  counterparty?: string;
-};
-
-// Mock transaction data
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    date: new Date(2025, 3, 5),
-    description: 'Salary Deposit',
-    amount: 3500,
-    type: 'credit',
-    category: 'Income',
-    status: 'completed',
-    counterparty: 'ABC Company'
-  },
-  {
-    id: '2',
-    date: new Date(2025, 3, 4),
-    description: 'Grocery Shopping',
-    amount: 87.45,
-    type: 'debit',
-    category: 'Food',
-    status: 'completed',
-    counterparty: 'Whole Foods'
-  },
-  {
-    id: '3',
-    date: new Date(2025, 3, 3),
-    description: 'Online Purchase',
-    amount: 129.99,
-    type: 'debit',
-    category: 'Shopping',
-    status: 'completed',
-    counterparty: 'Amazon'
-  },
-  {
-    id: '4',
-    date: new Date(2025, 3, 2),
-    description: 'Utility Bill',
-    amount: 65.00,
-    type: 'debit',
-    category: 'Bills',
-    status: 'completed',
-    counterparty: 'Energy Provider'
-  },
-  {
-    id: '5',
-    date: new Date(2025, 3, 1),
-    description: 'Restaurant Payment',
-    amount: 42.75,
-    type: 'debit',
-    category: 'Dining',
-    status: 'completed',
-    counterparty: 'Local Bistro'
-  },
-  {
-    id: '6',
-    date: new Date(2025, 2, 28),
-    description: 'Freelance Payment',
-    amount: 750,
-    type: 'credit',
-    category: 'Income',
-    status: 'completed',
-    counterparty: 'Client XYZ'
-  },
-  {
-    id: '7',
-    date: new Date(2025, 2, 25),
-    description: 'Mobile Phone Bill',
-    amount: 35.99,
-    type: 'debit',
-    category: 'Bills',
-    status: 'completed',
-    counterparty: 'Telecom Provider'
-  },
-  {
-    id: '8',
-    date: new Date(2025, 2, 20),
-    description: 'Gym Membership',
-    amount: 49.99,
-    type: 'debit',
-    category: 'Health',
-    status: 'completed',
-    counterparty: 'Fitness Club'
-  },
-  {
-    id: '9',
-    date: new Date(2025, 2, 15),
-    description: 'Book Purchase',
-    amount: 24.95,
-    type: 'debit',
-    category: 'Entertainment',
-    status: 'completed',
-    counterparty: 'Book Store'
-  },
-  {
-    id: '10',
-    date: new Date(2025, 2, 10),
-    description: 'Investment Dividend',
-    amount: 125.50,
-    type: 'credit',
-    category: 'Investment',
-    status: 'completed',
-    counterparty: 'Investment Fund'
-  },
-  {
-    id: '11',
-    date: new Date(2025, 2, 5),
-    description: 'Transfer to Savings',
-    amount: 300,
-    type: 'debit',
-    category: 'Transfer',
-    status: 'completed',
-    counterparty: 'Own Account'
-  },
-  {
-    id: '12',
-    date: new Date(2025, 2, 1),
-    description: 'Car Insurance',
-    amount: 89.75,
-    type: 'debit',
-    category: 'Insurance',
-    status: 'completed',
-    counterparty: 'Insurance Co.'
-  }
-];
+import { useToast } from '@/components/ui/use-toast';
 
 const TransactionsPage = () => {
   const { user } = useUser();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'credit' | 'debit'>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month' | 'year'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Filter transactions based on search query, type filter, and date filter
-  const filteredTransactions = mockTransactions.filter(transaction => {
-    const matchesSearch = 
-      transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.counterparty?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = 
-      typeFilter === 'all' || 
-      (typeFilter === 'credit' && transaction.type === 'credit') ||
-      (typeFilter === 'debit' && transaction.type === 'debit');
-    
-    let matchesDate = true;
-    const today = new Date();
-    if (dateFilter === 'week') {
-      const lastWeek = new Date(today);
-      lastWeek.setDate(today.getDate() - 7);
-      matchesDate = transaction.date >= lastWeek;
-    } else if (dateFilter === 'month') {
-      const lastMonth = new Date(today);
-      lastMonth.setMonth(today.getMonth() - 1);
-      matchesDate = transaction.date >= lastMonth;
-    } else if (dateFilter === 'year') {
-      const lastYear = new Date(today);
-      lastYear.setFullYear(today.getFullYear() - 1);
-      matchesDate = transaction.date >= lastYear;
-    }
-    
-    return matchesSearch && matchesType && matchesDate;
+  // Use React Query to fetch transactions
+  const { data: transactionData, isLoading, isError, error } = useQuery({
+    queryKey: ['transactions', user?.id, searchQuery, typeFilter, dateFilter, currentPage],
+    queryFn: () => getTransactions(user?.id || '', {
+      search: searchQuery,
+      type: typeFilter,
+      dateRange: dateFilter,
+      page: currentPage,
+      limit: itemsPerPage
+    }),
+    enabled: !!user?.id,
   });
 
-  // Paginate transactions
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+  // Show error toast if query fails
+  useEffect(() => {
+    if (isError && error) {
+      toast({
+        title: "Error loading transactions",
+        description: error.toString(),
+        variant: "destructive",
+      });
+    }
+  }, [isError, error, toast]);
 
   // Handle page change
   const handlePageChange = (pageNumber: number) => {
@@ -242,6 +99,43 @@ const TransactionsPage = () => {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  };
+
+  // Generate pagination items
+  const generatePaginationItems = () => {
+    if (!transactionData?.pagination) return [];
+
+    const { totalPages, page } = transactionData.pagination;
+    let items = [];
+
+    // Always show first page
+    items.push(1);
+
+    // Calculate range of pages to show around current page
+    let startPage = Math.max(2, page - 1);
+    let endPage = Math.min(totalPages - 1, page + 1);
+
+    // Add ellipsis after first page if needed
+    if (startPage > 2) {
+      items.push('ellipsis-start');
+    }
+
+    // Add pages in the middle
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(i);
+    }
+
+    // Add ellipsis before last page if needed
+    if (endPage < totalPages - 1 && totalPages > 1) {
+      items.push('ellipsis-end');
+    }
+
+    // Add last page if it's not the first page
+    if (totalPages > 1) {
+      items.push(totalPages);
+    }
+
+    return items;
   };
 
   return (
@@ -283,7 +177,7 @@ const TransactionsPage = () => {
               
               <Select 
                 value={typeFilter}
-                onValueChange={setTypeFilter}
+                onValueChange={(value) => setTypeFilter(value as 'all' | 'credit' | 'debit')}
               >
                 <SelectTrigger className="h-9 w-[130px]">
                   <SelectValue placeholder="Type" />
@@ -297,7 +191,7 @@ const TransactionsPage = () => {
               
               <Select
                 value={dateFilter}
-                onValueChange={setDateFilter}
+                onValueChange={(value) => setDateFilter(value as 'all' | 'week' | 'month' | 'year')}
               >
                 <SelectTrigger className="h-9 w-[130px]">
                   <SelectValue placeholder="Date" />
@@ -326,18 +220,26 @@ const TransactionsPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentTransactions.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-10">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-bank-primary"></div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : transactionData?.data.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                       No transactions found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentTransactions.map((transaction) => (
+                  transactionData?.data.map((transaction: Transaction) => (
                     <TableRow key={transaction.id} className="cursor-pointer hover:bg-muted/50">
                       <TableCell>
                         <div className="font-medium">
-                          {format(transaction.date, 'MMM dd, yyyy')}
+                          {format(new Date(transaction.date), 'MMM dd, yyyy')}
                         </div>
                         <div className="text-xs text-muted-foreground md:hidden">
                           {transaction.description}
@@ -384,7 +286,7 @@ const TransactionsPage = () => {
             </Table>
           </div>
           
-          {totalPages > 1 && (
+          {transactionData?.pagination && transactionData.pagination.totalPages > 1 && (
             <Pagination className="mt-4">
               <PaginationContent>
                 <PaginationItem>
@@ -398,52 +300,41 @@ const TransactionsPage = () => {
                   />
                 </PaginationItem>
                 
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const pageNumber = i + 1;
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationLink 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handlePageChange(pageNumber);
-                        }}
-                        isActive={pageNumber === currentPage}
-                      >
-                        {pageNumber}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-                
-                {totalPages > 5 && (
-                  <>
-                    <PaginationItem>
+                {generatePaginationItems().map((item, index) => (
+                  item === 'ellipsis-start' || item === 'ellipsis-end' ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
                       <PaginationEllipsis />
                     </PaginationItem>
-                    <PaginationItem>
+                  ) : (
+                    <PaginationItem key={`page-${item}`}>
                       <PaginationLink 
                         href="#" 
                         onClick={(e) => {
                           e.preventDefault();
-                          handlePageChange(totalPages);
+                          handlePageChange(item as number);
                         }}
-                        isActive={totalPages === currentPage}
+                        isActive={item === currentPage}
                       >
-                        {totalPages}
+                        {item}
                       </PaginationLink>
                     </PaginationItem>
-                  </>
-                )}
+                  )
+                ))}
                 
                 <PaginationItem>
                   <PaginationNext 
                     href="#" 
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                      if (transactionData.pagination && currentPage < transactionData.pagination.totalPages) {
+                        handlePageChange(currentPage + 1);
+                      }
                     }}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                    className={
+                      transactionData.pagination && currentPage === transactionData.pagination.totalPages 
+                      ? 'pointer-events-none opacity-50' 
+                      : ''
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>

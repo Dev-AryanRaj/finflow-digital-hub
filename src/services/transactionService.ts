@@ -11,6 +11,7 @@ export async function getTransactions(userId: string, options?: {
   accountId?: string
 }) {
   try {
+    console.log('Getting transactions for userId:', userId, 'with options:', options);
     await connectToDatabase();
     const transactionsCollection = getCollection('transactions');
     
@@ -68,6 +69,8 @@ export async function getTransactions(userId: string, options?: {
       
       query.date = { $gte: startDate };
     }
+
+    console.log('Executing MongoDB query:', JSON.stringify(query));
     
     const transactions = await transactionsCollection
       .find(query)
@@ -77,6 +80,8 @@ export async function getTransactions(userId: string, options?: {
       .toArray();
       
     const total = await transactionsCollection.countDocuments(query);
+    
+    console.log(`Found ${transactions.length} transactions out of ${total} total`);
     
     return {
       data: transactions,
@@ -89,7 +94,18 @@ export async function getTransactions(userId: string, options?: {
     };
   } catch (error) {
     console.error('Failed to get transactions:', error);
-    throw new Error('Failed to retrieve transactions');
+    
+    // Return empty data with error information instead of throwing
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : 'Unknown error fetching transactions',
+      pagination: {
+        total: 0,
+        page: options?.page || 1,
+        limit: options?.limit || 10,
+        totalPages: 0
+      }
+    };
   }
 }
 

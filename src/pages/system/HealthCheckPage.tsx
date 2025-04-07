@@ -22,7 +22,17 @@ const HealthCheckPage = () => {
     
     try {
       const result = await checkDatabaseConnection();
-      setHealth(result);
+      if (result.status === 'connected') {
+        setHealth({ 
+          status: 'connected', 
+          ping: result.ping 
+        });
+      } else {
+        setHealth({ 
+          status: 'disconnected', 
+          error: result.error 
+        });
+      }
     } catch (error) {
       setHealth({ 
         status: 'disconnected', 

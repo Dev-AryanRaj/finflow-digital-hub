@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatabaseOff, RefreshCw } from 'lucide-react';
+import { Database, RefreshCw } from 'lucide-react';
 
 interface DatabaseConnectionErrorProps {
   message?: string;
@@ -14,7 +14,7 @@ const DatabaseConnectionError = ({ message, onRetry }: DatabaseConnectionErrorPr
       <Card className="mx-auto max-w-md border-warning">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-warning">
-            <DatabaseOff className="h-6 w-6" />
+            <Database className="h-6 w-6" />
             Database Connection Problem
           </CardTitle>
         </CardHeader>

@@ -336,7 +336,7 @@ const App = () => {
           <Sonner />
           <ErrorBoundary>
             <BrowserRouter>
-              {!dbStatus.connected && window.location.pathname !== '/health' ? (
+            {typeof window !== 'undefined' && !dbStatus.connected && (window as Window).location.pathname !== '/health' ? (
                 <Routes>
                   <Route path="/health" element={
                     <MainLayout>

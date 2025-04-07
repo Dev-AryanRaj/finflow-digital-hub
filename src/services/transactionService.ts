@@ -1,5 +1,5 @@
 import { connectToDatabase, getCollection } from '../lib/mongodb';
-import { Transaction, TransactionType } from '../models/Transaction';
+import { Transaction, TransactionStatus, TransactionType } from '../models/Transaction';
 
 // Check if running in browser environment
 const isBrowser = typeof window !== 'undefined';

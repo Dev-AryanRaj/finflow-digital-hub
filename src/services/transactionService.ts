@@ -1,6 +1,5 @@
-
 import { connectToDatabase, getCollection } from '../lib/mongodb';
-import { Transaction } from '../models/Transaction';
+import { Transaction, TransactionType } from '../models/Transaction';
 
 // Check if running in browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -8,7 +7,7 @@ const isBrowser = typeof window !== 'undefined';
 // Generate mock transactions for browser environment
 function generateMockTransactions(userId: string, count = 10): Transaction[] {
   const transactions: Transaction[] = [];
-  const types = ['credit', 'debit'];
+  const types: TransactionType[] = ['credit', 'debit'];
   const categories = ['Groceries', 'Utilities', 'Salary', 'Transfer', 'Shopping'];
   const counterparties = ['Amazon', 'Walmart', 'Employer Inc', 'Electric Company', 'Friend'];
   

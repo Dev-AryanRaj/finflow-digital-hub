@@ -4,13 +4,14 @@ import { checkDatabaseConnection } from '@/lib/mongodb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, Database } from 'lucide-react';
 
 const HealthCheckPage = () => {
   const [health, setHealth] = useState<{
     status: 'checking' | 'connected' | 'disconnected';
     ping?: string;
     error?: string;
+    isBrowserMode?: boolean;
   }>({
     status: 'checking'
   });
@@ -25,18 +26,21 @@ const HealthCheckPage = () => {
       if (result.status === 'connected') {
         setHealth({ 
           status: 'connected', 
-          ping: result.ping 
+          ping: result.ping,
+          isBrowserMode: typeof window !== 'undefined'
         });
       } else {
         setHealth({ 
           status: 'disconnected', 
-          error: result.error 
+          error: result.error,
+          isBrowserMode: typeof window !== 'undefined'
         });
       }
     } catch (error) {
       setHealth({ 
         status: 'disconnected', 
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        isBrowserMode: typeof window !== 'undefined'
       });
     } finally {
       setLoading(false);
@@ -68,6 +72,9 @@ const HealthCheckPage = () => {
             </CardTitle>
             <CardDescription>
               MongoDB connection status
+              {health.isBrowserMode && (
+                <span className="ml-2 text-amber-500">(Browser Mode: Using Simulated Connection)</span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -80,7 +87,12 @@ const HealthCheckPage = () => {
               <div className="flex items-center text-green-600">
                 <CheckCircle className="h-5 w-5 mr-2" />
                 <span>Connected</span>
-                {health.ping && <span className="ml-2 text-sm text-muted-foreground">(Ping: {health.ping})</span>}
+                {health.ping && (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    (Ping: {health.ping})
+                    {health.isBrowserMode && " - Note: This is a simulated connection for browser environment"}
+                  </span>
+                )}
               </div>
             ) : (
               <div className="space-y-2">

@@ -19,8 +19,6 @@ export async function findUserByEmail(email: string): Promise<User | null> {
       return {
         id: '1',
         email: 'customer@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
         role: 'CUSTOMER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -29,8 +27,6 @@ export async function findUserByEmail(email: string): Promise<User | null> {
       return {
         id: '2',
         email: 'teller@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
         role: 'TELLER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -57,8 +53,6 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Us
       return {
         id: '1',
         email: 'customer@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
         role: 'CUSTOMER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -67,8 +61,6 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Us
       return {
         id: '2',
         email: 'teller@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
         role: 'TELLER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -102,8 +94,6 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
     return {
       id: userId,
       email: updates.email || 'user@example.com',
-      firstName: updates.firstName || 'Updated',
-      lastName: updates.lastName || 'User',
       role: 'CUSTOMER',
       createdAt: new Date(),
       updatedAt: new Date()

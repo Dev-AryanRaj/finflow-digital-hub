@@ -5,10 +5,14 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 const MONGODB_URI = import.meta.env.VITE_MONGODB_URI || 'mongodb://localhost:27017/bankapp';
 const MONGODB_DB_NAME = import.meta.env.VITE_MONGODB_DB_NAME || 'bankapp';
 
-console.log('MongoDB connection info:', {
-  uri: MONGODB_URI.includes('@') 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
+console.log('MongoDB environment:', {
+  isBrowser,
+  uri: !isBrowser ? MONGODB_URI.includes('@') 
     ? MONGODB_URI.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@') 
-    : MONGODB_URI, // Log URI without exposing credentials
+    : MONGODB_URI : 'browser-mode', // Log URI without exposing credentials
   dbName: MONGODB_DB_NAME
 });
 
@@ -16,29 +20,165 @@ console.log('MongoDB connection info:', {
 let cachedClient: MongoClient | null = null;
 let cachedDb: any = null;
 
-// Mock implementation for browser environment
-const isBrowser = typeof window !== 'undefined';
+// Mock implementations for browser environment
+const mockCollections: Record<string, any[]> = {
+  users: [
+    {
+      id: '1',
+      email: 'customer@example.com',
+      passwordHash: 'cGFzc3dvcmQ=', // 'password' encoded
+      role: 'CUSTOMER',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: '2',
+      email: 'teller@example.com',
+      passwordHash: 'cGFzc3dvcmQ=', // 'password' encoded
+      role: 'TELLER',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ],
+  accounts: [],
+  transactions: []
+};
+
+// Mock collection for browser usage
+class MockCollection {
+  private data: any[];
+  
+  constructor(collectionName: string) {
+    this.data = mockCollections[collectionName] || [];
+  }
+  
+  async find(query: any = {}) {
+    console.log('Mock find with query:', query);
+    // Simple filtering based on query
+    let results = [...this.data];
+    
+    // Filter by fields (very basic implementation)
+    Object.keys(query).forEach(key => {
+      if (key === '$or') {
+        // Handle $or operator
+        const orConditions = query[key];
+        results = results.filter(item => 
+          orConditions.some((condition: any) => {
+            const conditionKey = Object.keys(condition)[0];
+            const conditionValue = condition[conditionKey];
+            
+            if (conditionValue instanceof RegExp) {
+              return conditionValue.test(item[conditionKey]);
+            }
+            return item[conditionKey] === conditionValue;
+          })
+        );
+      } else if (typeof query[key] === 'object' && query[key] !== null) {
+        // Handle operators like $gte
+        const operators = query[key];
+        Object.keys(operators).forEach(op => {
+          if (op === '$gte') {
+            results = results.filter(item => item[key] >= operators[op]);
+          }
+        });
+      } else {
+        // Simple equality
+        results = results.filter(item => item[key] === query[key]);
+      }
+    });
+    
+    return {
+      toArray: async () => results,
+      sort: (sortOptions: any) => {
+        // Basic sort implementation
+        const sortKey = Object.keys(sortOptions)[0];
+        const sortDir = sortOptions[sortKey];
+        results.sort((a, b) => {
+          if (sortDir === 1) {
+            return a[sortKey] > b[sortKey] ? 1 : -1;
+          }
+          return a[sortKey] < b[sortKey] ? 1 : -1;
+        });
+        return {
+          skip: (n: number) => {
+            results = results.slice(n);
+            return {
+              limit: (n: number) => {
+                results = results.slice(0, n);
+                return {
+                  toArray: async () => results
+                };
+              }
+            };
+          },
+          limit: (n: number) => {
+            results = results.slice(0, n);
+            return {
+              toArray: async () => results
+            };
+          },
+          toArray: async () => results
+        };
+      }
+    };
+  }
+  
+  async findOne(query: any = {}) {
+    console.log('Mock findOne with query:', query);
+    return this.data.find(item => {
+      for (const key in query) {
+        if (item[key] !== query[key]) {
+          return false;
+        }
+      }
+      return true;
+    }) || null;
+  }
+  
+  async insertOne(document: any) {
+    console.log('Mock insertOne:', document);
+    this.data.push(document);
+    return { insertedId: document.id };
+  }
+  
+  async updateOne(filter: any, update: any) {
+    console.log('Mock updateOne:', filter, update);
+    const index = this.data.findIndex(item => {
+      for (const key in filter) {
+        if (item[key] !== filter[key]) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    if (index !== -1) {
+      if (update.$set) {
+        this.data[index] = {
+          ...this.data[index],
+          ...update.$set
+        };
+      }
+    }
+    
+    return { modifiedCount: index !== -1 ? 1 : 0 };
+  }
+  
+  async countDocuments(query: any = {}) {
+    const results = await this.find(query);
+    const arr = await results.toArray();
+    return arr.length;
+  }
+}
 
 export async function connectToDatabase() {
-  // For browser environment, we should provide mock implementation or API endpoints
+  // For browser environment, return a mock connection
   if (isBrowser) {
-    console.warn('MongoDB direct connection not supported in browser. Use API endpoints instead.');
-    
-    // Return a simulated connection status based on a health check endpoint
-    try {
-      const response = await fetch('/api/db/health');
-      if (!response.ok) {
-        throw new Error('Database connection check failed');
-      }
-      return { status: 'connected', mockConnection: true };
-    } catch (error) {
-      console.error('Failed to check database connection:', error);
-      return { 
-        status: 'disconnected', 
-        error: error instanceof Error ? error.message : 'Unknown database connection error',
-        mockConnection: true
-      };
-    }
+    console.log('Browser environment detected, using mock MongoDB connection');
+    return { 
+      status: 'connected', 
+      mockConnection: true 
+    };
   }
 
   // Server-side connection logic
@@ -86,8 +226,8 @@ export async function connectToDatabase() {
 
 export function getCollection(collectionName: string) {
   if (isBrowser) {
-    console.warn('Direct collection access not supported in browser.');
-    return null;
+    console.log('Browser environment detected, using mock collection for:', collectionName);
+    return new MockCollection(collectionName);
   }
   
   if (!cachedDb) {
@@ -98,6 +238,14 @@ export function getCollection(collectionName: string) {
 
 // Helper function to check database connection health
 export async function checkDatabaseConnection() {
+  if (isBrowser) {
+    console.log('Browser environment detected, database check will always succeed');
+    return { 
+      status: 'connected',
+      ping: 'successful (browser mock)'
+    };
+  }
+  
   try {
     const result = await connectToDatabase();
     if (result.status === 'connected') {

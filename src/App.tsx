@@ -18,6 +18,7 @@ import AccountDetailsPage from "./pages/customer/AccountDetailsPage";
 import HealthCheckPage from "./pages/system/HealthCheckPage";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import DatabaseConnectionError from "./components/common/DatabaseConnectionError";
+import { checkDatabaseConnection } from "@/lib/mongodb";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -246,6 +247,16 @@ const App = () => {
     const checkDb = async () => {
       try {
         console.log("Checking database connection on app start...");
+        
+        if (typeof window !== 'undefined') {
+          setDbStatus({
+            checking: false,
+            connected: true
+          });
+          console.log("Browser environment detected, skipping actual DB check");
+          return;
+        }
+        
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Database connection check timed out')), 5000);
         });

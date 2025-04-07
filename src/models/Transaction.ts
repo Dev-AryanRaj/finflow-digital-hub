@@ -17,7 +17,7 @@ export interface Transaction {
   counterparty?: string;
   reference?: string;
   accountId?: string;
-  currency?: string;
+  currency: string; // Changed from optional to required
   createdAt: Date;
   updatedAt: Date;
 }

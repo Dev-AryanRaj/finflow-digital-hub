@@ -197,14 +197,14 @@ export async function getTransactionById(id: string) {
       id,
       userId: '123',
       accountId: '1',
-      type: 'debit',
+      type: 'debit' as TransactionType,
       amount: 42.99,
       currency: 'USD',
       date: new Date(),
       description: 'Purchase at Online Store',
       category: 'Shopping',
       counterparty: 'Online Store',
-      status: 'completed',
+      status: 'completed' as TransactionStatus,
       createdAt: new Date(),
       updatedAt: new Date()
     };

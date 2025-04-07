@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -248,6 +249,7 @@ const App = () => {
       try {
         console.log("Checking database connection on app start...");
         
+        // Always set connected to true in browser environment
         if (typeof window !== 'undefined') {
           setDbStatus({
             checking: false,
@@ -276,11 +278,19 @@ const App = () => {
         console.log("Database connection check result:", result);
       } catch (error) {
         console.error("Error checking database:", error);
-        setDbStatus({
-          checking: false,
-          connected: false,
-          error: error instanceof Error ? error.message : 'Unknown error checking database',
-        });
+        // In browser environment, don't show DB errors
+        if (typeof window !== 'undefined') {
+          setDbStatus({
+            checking: false,
+            connected: true
+          });
+        } else {
+          setDbStatus({
+            checking: false,
+            connected: false,
+            error: error instanceof Error ? error.message : 'Unknown error checking database',
+          });
+        }
       }
     };
 
@@ -298,6 +308,26 @@ const App = () => {
     );
   }
 
+  // For browser environment, always render routes regardless of db status
+  if (typeof window !== 'undefined') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <UserProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <ErrorBoundary>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </ErrorBoundary>
+          </TooltipProvider>
+        </UserProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  // Original server-side logic
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>

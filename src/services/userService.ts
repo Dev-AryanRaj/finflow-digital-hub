@@ -1,7 +1,9 @@
 
 import { connectToDatabase, getCollection } from '../lib/mongodb';
 import { User, UserCredentials } from '../models/User';
-import { ObjectId } from 'mongodb';
+
+// Check if running in browser environment
+const isBrowser = typeof window !== 'undefined';
 
 // This is a simple hash function for demo purposes
 // In a real app, use bcrypt or a similar library
@@ -10,6 +12,33 @@ function simpleHash(input: string): string {
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
+  if (isBrowser) {
+    console.log('Finding user by email:', email);
+    // Mock user data for browser environment
+    if (email === 'customer@example.com') {
+      return {
+        id: '1',
+        email: 'customer@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'CUSTOMER',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    } else if (email === 'teller@example.com') {
+      return {
+        id: '2',
+        email: 'teller@example.com',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        role: 'TELLER',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    return null;
+  }
+  
   try {
     await connectToDatabase();
     const usersCollection = getCollection('users');
@@ -21,6 +50,33 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function authenticateUser(credentials: UserCredentials): Promise<User | null> {
+  if (isBrowser) {
+    console.log('Authenticating user:', credentials.email);
+    // Mock authentication for browser environment
+    if (credentials.email === 'customer@example.com' && credentials.password === 'password') {
+      return {
+        id: '1',
+        email: 'customer@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'CUSTOMER',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    } else if (credentials.email === 'teller@example.com' && credentials.password === 'password') {
+      return {
+        id: '2',
+        email: 'teller@example.com',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        role: 'TELLER',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    return null;
+  }
+  
   try {
     const { email, password } = credentials;
     await connectToDatabase();
@@ -40,6 +96,20 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Us
 }
 
 export async function updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
+  if (isBrowser) {
+    console.log('Updating user:', userId, 'with data:', updates);
+    // Mock update for browser environment
+    return {
+      id: userId,
+      email: updates.email || 'user@example.com',
+      firstName: updates.firstName || 'Updated',
+      lastName: updates.lastName || 'User',
+      role: 'CUSTOMER',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+  
   try {
     await connectToDatabase();
     const usersCollection = getCollection('users');
@@ -65,6 +135,12 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
 }
 
 export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+  if (isBrowser) {
+    console.log('Changing password for user:', userId);
+    // Mock password change for browser environment
+    return true;
+  }
+  
   try {
     await connectToDatabase();
     const usersCollection = getCollection('users');

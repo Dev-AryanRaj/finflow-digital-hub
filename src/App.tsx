@@ -16,7 +16,6 @@ import TransactionsPage from "./pages/TransactionsPage";
 import AccountsPage from "./pages/AccountsPage";
 import AccountDetailsPage from "./pages/customer/AccountDetailsPage";
 import HealthCheckPage from "./pages/system/HealthCheckPage";
-import { checkDatabaseConnection } from "./lib/mongodb";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import DatabaseConnectionError from "./components/common/DatabaseConnectionError";
 
@@ -107,11 +106,9 @@ const AppRoutes = () => {
       <Route 
         path="/health" 
         element={
-          <ErrorBoundary>
-            <MainLayout>
-              <HealthCheckPage />
-            </MainLayout>
-          </ErrorBoundary>
+          <MainLayout>
+            <HealthCheckPage />
+          </MainLayout>
         } 
       />
       
@@ -237,11 +234,11 @@ const AppRoutes = () => {
 
 const App = () => {
   const [dbStatus, setDbStatus] = useState<{
-    checked: boolean;
+    checking: boolean;
     connected: boolean;
     error?: string;
   }>({
-    checked: false,
+    checking: true,
     connected: false,
   });
 
@@ -249,9 +246,19 @@ const App = () => {
     const checkDb = async () => {
       try {
         console.log("Checking database connection on app start...");
-        const result = await checkDatabaseConnection();
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Database connection check timed out')), 5000);
+        });
+        
+        const connectionPromise = checkDatabaseConnection();
+        
+        const result = await Promise.race([
+          connectionPromise,
+          timeoutPromise
+        ]) as any;
+        
         setDbStatus({
-          checked: true,
+          checking: false,
           connected: result.status === 'connected',
           error: result.error,
         });
@@ -259,7 +266,7 @@ const App = () => {
       } catch (error) {
         console.error("Error checking database:", error);
         setDbStatus({
-          checked: true,
+          checking: false,
           connected: false,
           error: error instanceof Error ? error.message : 'Unknown error checking database',
         });
@@ -269,10 +276,13 @@ const App = () => {
     checkDb();
   }, []);
 
-  if (!dbStatus.checked) {
+  if (dbStatus.checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-bank-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-bank-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Connecting to database...</p>
+        </div>
       </div>
     );
   }
@@ -287,13 +297,15 @@ const App = () => {
             <BrowserRouter>
               {!dbStatus.connected && window.location.pathname !== '/health' ? (
                 <Routes>
-                  <Route path="/health" element={<HealthCheckPage />} />
+                  <Route path="/health" element={
+                    <MainLayout>
+                      <HealthCheckPage />
+                    </MainLayout>
+                  } />
                   <Route path="*" element={
                     <DatabaseConnectionError 
                       message={dbStatus.error}
-                      onRetry={async () => {
-                        window.location.reload();
-                      }}
+                      onRetry={() => window.location.reload()}
                     />
                   } />
                 </Routes>

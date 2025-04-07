@@ -1,16 +1,14 @@
 
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
-
-// Configure MongoDB URI with fallbacks
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bankapp';
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'bankapp';
+// MongoDB URI with fallbacks
+const MONGODB_URI = import.meta.env.VITE_MONGODB_URI || 'mongodb://localhost:27017/bankapp';
+const MONGODB_DB_NAME = import.meta.env.VITE_MONGODB_DB_NAME || 'bankapp';
 
 console.log('MongoDB connection info:', {
-  uri: MONGODB_URI.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@'), // Log URI without exposing credentials
+  uri: MONGODB_URI.includes('@') 
+    ? MONGODB_URI.replace(/:\/\/([^:]+):([^@]+)@/, '://***:***@') 
+    : MONGODB_URI, // Log URI without exposing credentials
   dbName: MONGODB_DB_NAME
 });
 
@@ -18,10 +16,35 @@ console.log('MongoDB connection info:', {
 let cachedClient: MongoClient | null = null;
 let cachedDb: any = null;
 
+// Mock implementation for browser environment
+const isBrowser = typeof window !== 'undefined';
+
 export async function connectToDatabase() {
+  // For browser environment, we should provide mock implementation or API endpoints
+  if (isBrowser) {
+    console.warn('MongoDB direct connection not supported in browser. Use API endpoints instead.');
+    
+    // Return a simulated connection status based on a health check endpoint
+    try {
+      const response = await fetch('/api/db/health');
+      if (!response.ok) {
+        throw new Error('Database connection check failed');
+      }
+      return { status: 'connected', mockConnection: true };
+    } catch (error) {
+      console.error('Failed to check database connection:', error);
+      return { 
+        status: 'disconnected', 
+        error: error instanceof Error ? error.message : 'Unknown database connection error',
+        mockConnection: true
+      };
+    }
+  }
+
+  // Server-side connection logic
   if (cachedClient && cachedDb) {
     console.log('Using cached database connection');
-    return { client: cachedClient, db: cachedDb };
+    return { client: cachedClient, db: cachedDb, status: 'connected' };
   }
 
   try {
@@ -48,20 +71,25 @@ export async function connectToDatabase() {
     cachedDb = db;
     
     console.log('Successfully connected to MongoDB');
-    return { client, db };
+    return { client, db, status: 'connected' };
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     
-    // Attempt to handle specific errors or provide better error messages
-    if (error instanceof Error) {
-      // Improve the error message
-      throw new Error(`Database connection failed: ${error.message}. Please check your MongoDB connection string and ensure the database server is running.`);
-    }
-    throw error;
+    return {
+      status: 'disconnected',
+      error: error instanceof Error 
+        ? `Database connection failed: ${error.message}. Please check your MongoDB connection string and ensure the database server is running.`
+        : 'Unknown database error'
+    };
   }
 }
 
 export function getCollection(collectionName: string) {
+  if (isBrowser) {
+    console.warn('Direct collection access not supported in browser.');
+    return null;
+  }
+  
   if (!cachedDb) {
     throw new Error('Database connection not established. Call connectToDatabase() first.');
   }
@@ -71,13 +99,18 @@ export function getCollection(collectionName: string) {
 // Helper function to check database connection health
 export async function checkDatabaseConnection() {
   try {
-    const { client } = await connectToDatabase();
-    const admin = client.db().admin();
-    const result = await admin.ping();
-    return { 
-      status: 'connected',
-      ping: result.ok === 1 ? 'successful' : 'failed'
-    };
+    const result = await connectToDatabase();
+    if (result.status === 'connected') {
+      return { 
+        status: 'connected',
+        ping: 'successful'
+      };
+    } else {
+      return {
+        status: 'disconnected',
+        error: result.error || 'Failed to connect to database'
+      };
+    }
   } catch (error) {
     console.error('Database health check failed:', error);
     return { 

@@ -17,6 +17,7 @@ export interface Transaction {
   counterparty?: string;
   reference?: string;
   accountId?: string;
+  currency?: string;
   createdAt: Date;
   updatedAt: Date;
 }

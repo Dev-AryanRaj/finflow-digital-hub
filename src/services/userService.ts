@@ -1,4 +1,3 @@
-
 import { connectToDatabase, getCollection } from '../lib/mongodb';
 import { User, UserCredentials } from '../models/User';
 
@@ -18,6 +17,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     if (email === 'customer@example.com') {
       return {
         id: '1',
+        name: 'Customer User',
         email: 'customer@example.com',
         role: 'CUSTOMER',
         createdAt: new Date(),
@@ -26,6 +26,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     } else if (email === 'teller@example.com') {
       return {
         id: '2',
+        name: 'Teller User',
         email: 'teller@example.com',
         role: 'TELLER',
         createdAt: new Date(),
@@ -52,6 +53,7 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Us
     if (credentials.email === 'customer@example.com' && credentials.password === 'password') {
       return {
         id: '1',
+        name: 'Customer User',
         email: 'customer@example.com',
         role: 'CUSTOMER',
         createdAt: new Date(),
@@ -60,6 +62,7 @@ export async function authenticateUser(credentials: UserCredentials): Promise<Us
     } else if (credentials.email === 'teller@example.com' && credentials.password === 'password') {
       return {
         id: '2',
+        name: 'Teller User',
         email: 'teller@example.com',
         role: 'TELLER',
         createdAt: new Date(),
@@ -93,6 +96,7 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
     // Mock update for browser environment
     return {
       id: userId,
+      name: updates.name || 'User Name',
       email: updates.email || 'user@example.com',
       role: 'CUSTOMER',
       createdAt: new Date(),

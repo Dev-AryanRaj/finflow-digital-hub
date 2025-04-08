@@ -149,7 +149,9 @@ const BillPaymentsPage = () => {
                   <SelectContent>
                     {billProviders.map(provider => (
                       <SelectItem key={provider.id} value={provider.name}>
-                        <span className="mr-2">{provider.icon}</span> {provider.name}
+                        <div className="flex items-center">
+                          <span className="mr-2">{provider.icon}</span> {provider.name}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -201,7 +203,6 @@ const BillPaymentsPage = () => {
               placeholder="Search bills or providers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              prefix={<Search className="h-4 w-4 text-muted-foreground" />}
             />
           </div>
         </CardHeader>
@@ -212,15 +213,15 @@ const BillPaymentsPage = () => {
             onValueChange={setActiveTab}
           >
             <TabsList className="mb-4">
-              <TabsTrigger value="upcoming" className="gap-2">
+              <TabsTrigger value="upcoming" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span>Upcoming Bills</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
+              <TabsTrigger value="history" className="flex items-center gap-2">
                 <Receipt className="h-4 w-4" />
                 <span>Payment History</span>
               </TabsTrigger>
-              <TabsTrigger value="providers" className="gap-2">
+              <TabsTrigger value="providers" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 <span>Bill Providers</span>
               </TabsTrigger>
@@ -302,8 +303,10 @@ const BillPaymentsPage = () => {
                         <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            {payment.status}
+                            <div className="flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              <span>{payment.status}</span>
+                            </div>
                           </Badge>
                         </TableCell>
                       </TableRow>

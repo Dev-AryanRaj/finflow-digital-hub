@@ -206,18 +206,17 @@ const SupportPage = () => {
                 placeholder="Search for answers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                prefix={<Search className="h-4 w-4 text-muted-foreground" />}
               />
             </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="faqs">
               <TabsList className="mb-4">
-                <TabsTrigger value="faqs" className="gap-2">
+                <TabsTrigger value="faqs" className="flex items-center gap-2">
                   <FileQuestion className="h-4 w-4" />
                   <span>Frequently Asked Questions</span>
                 </TabsTrigger>
-                <TabsTrigger value="contact" className="gap-2">
+                <TabsTrigger value="contact" className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
                   <span>Contact Us</span>
                 </TabsTrigger>
@@ -344,8 +343,10 @@ const SupportPage = () => {
                         </div>
                         
                         <Button type="submit" className="w-full">
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Message
+                          <div className="flex items-center">
+                            <Send className="h-4 w-4 mr-2" />
+                            <span>Send Message</span>
+                          </div>
                         </Button>
                       </div>
                     </form>
@@ -381,9 +382,11 @@ const SupportPage = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         For urgent matters, please call our 24/7 customer support line.
                       </p>
-                      <Button variant="link" className="p-0 mt-2 h-auto flex items-center">
-                        <span>More emergency options</span>
-                        <ChevronRight className="h-4 w-4" />
+                      <Button variant="link" className="p-0 mt-2 h-auto">
+                        <div className="flex items-center">
+                          <span>More emergency options</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </div>
                       </Button>
                     </div>
                   </div>

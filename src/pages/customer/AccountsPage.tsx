@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PlusCircle, CreditCard, Wallet, Eye, EyeOff, DollarSign } from 'lucide-react';
+import { PlusCircle, CreditCard as CreditCardIcon, Wallet, Eye, EyeOff, DollarSign } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -140,12 +140,12 @@ const AccountsPage = () => {
         
         <TabsContent value="credit" className="space-y-4">
           {creditAccounts.map(account => (
-            <CreditCard 
+            <CreditCardComponent 
               key={account.id}
               account={account}
               showBalance={showBalances}
               formatCurrency={formatCurrency}
-              icon={<CreditCard className="h-5 w-5 text-bank-primary" />}
+              icon={<CreditCardIcon className="h-5 w-5 text-bank-primary" />}
             />
           ))}
         </TabsContent>
@@ -321,7 +321,7 @@ interface CreditCardProps {
   icon: React.ReactNode;
 }
 
-const CreditCard = ({ account, showBalance, formatCurrency, icon }: CreditCardProps) => {
+const CreditCardComponent = ({ account, showBalance, formatCurrency, icon }: CreditCardProps) => {
   const { toast } = useToast();
   
   const handlePayment = () => {

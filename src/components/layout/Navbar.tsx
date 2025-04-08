@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Sun, Moon, Menu } from 'lucide-react';
 import { 
   SidebarTrigger, 
@@ -24,8 +25,14 @@ interface NavbarProps {
 }
 
 const Navbar = ({ theme, toggleTheme }: NavbarProps) => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const handleSignOut = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="border-b bg-white dark:bg-card">
@@ -82,10 +89,10 @@ const Navbar = ({ theme, toggleTheme }: NavbarProps) => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem as={Link} to="/settings">Profile</DropdownMenuItem>
+              <DropdownMenuItem as={Link} to="/settings">Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

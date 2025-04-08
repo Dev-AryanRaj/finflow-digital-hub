@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
 
 export type UserRole = 'CUSTOMER' | 'TELLER';
 
@@ -22,9 +24,13 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Store user data in localStorage
+const USER_STORAGE_KEY = 'finflow-user';
+
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   // Mock user data for development
   const mockCustomer: User = {
@@ -43,17 +49,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     profileUrl: 'https://i.pravatar.cc/150?u=admin@finflow.com'
   };
 
-  // For development only - simulate authentication check
+  // Load user from localStorage on mount
   useEffect(() => {
-    // Simulate API call to check authentication
     const checkAuth = async () => {
       try {
-        // Simulate delay for API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
         
-        // For development, set the user or leave as null
-        // In production, this would check with your backend
-        setUser(mockCustomer);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Authentication check failed:', error);
         setUser(null);
@@ -71,14 +77,40 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock login logic
-      if (email === 'admin@finflow.com') {
-        setUser(mockTeller);
+      let userToSet;
+      
+      // For now, any email with "admin" or "teller" will log in as teller role
+      if (email.includes('admin') || email.includes('teller')) {
+        // Set custom name if email is not the default
+        userToSet = {
+          ...mockTeller,
+          email,
+          name: email !== mockTeller.email ? email.split('@')[0] : mockTeller.name
+        };
       } else {
-        setUser(mockCustomer);
+        // Set custom name if email is not the default
+        userToSet = {
+          ...mockCustomer,
+          email,
+          name: email !== mockCustomer.email ? email.split('@')[0] : mockCustomer.name
+        };
       }
+      
+      // Store in localStorage for persistence
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userToSet));
+      setUser(userToSet);
+      
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${userToSet.name}!`,
+      });
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "Please check your credentials and try again.",
+      });
       throw new Error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
@@ -91,9 +123,22 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // This would integrate with the Google OAuth flow
       // For now we just simulate success
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Store in localStorage for persistence
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockCustomer));
       setUser(mockCustomer);
+      
+      toast({
+        title: "Google login successful",
+        description: `Welcome back, ${mockCustomer.name}!`,
+      });
     } catch (error) {
       console.error('Google login failed:', error);
+      toast({
+        variant: "destructive",
+        title: "Google login failed",
+        description: "Please try again later.",
+      });
       throw new Error('Google login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -101,7 +146,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   const logout = () => {
+    localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
   };
   
   return (

@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { UserProvider, useUser } from "@/contexts/UserContext";
+import { useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -66,6 +68,22 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   }
   
   return children;
+};
+
+const LogoutPage = () => {
+  const { logout } = useUser();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div>Logging out...</div>
+    </div>
+  );
 };
 
 const AppRoutes = () => {
@@ -194,7 +212,7 @@ const AppRoutes = () => {
       
       <Route 
         path="/logout" 
-        element={<div>Logging out...</div>} 
+        element={<LogoutPage />} 
       />
       
       <Route path="*" element={<NotFound />} />

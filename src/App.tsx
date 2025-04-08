@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,8 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import AccountsPage from "./pages/customer/AccountsPage";
 import DepositsPage from "./pages/customer/DepositsPage";
+import BillPaymentsPage from "./pages/customer/BillPaymentsPage";
+import SupportPage from "./pages/SupportPage";
 
 const queryClient = new QueryClient();
 
@@ -163,7 +164,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="CUSTOMER">
             <MainLayout>
-              <div>Bill Payments</div>
+              <BillPaymentsPage />
             </MainLayout>
           </ProtectedRoute>
         } 
@@ -174,7 +175,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MainLayout>
-              <div>Support Center</div>
+              <SupportPage />
             </MainLayout>
           </ProtectedRoute>
         } 
@@ -202,7 +203,6 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  // Fix window reference check to work in SSR environments
   const isBrowser = typeof window !== 'undefined';
   
   return (

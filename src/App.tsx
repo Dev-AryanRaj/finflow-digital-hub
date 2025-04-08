@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,8 @@ import DashboardPage from "./pages/customer/DashboardPage";
 import TellerDashboardPage from "./pages/teller/TellerDashboardPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import TransactionsPage from "./pages/TransactionsPage";
+import AccountsPage from "./pages/customer/AccountsPage";
+import DepositsPage from "./pages/customer/DepositsPage";
 
 const queryClient = new QueryClient();
 
@@ -127,7 +130,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="CUSTOMER">
             <MainLayout>
-              <div>Accounts Page</div>
+              <AccountsPage />
             </MainLayout>
           </ProtectedRoute>
         } 
@@ -149,7 +152,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="CUSTOMER">
             <MainLayout>
-              <div>Deposits Management</div>
+              <DepositsPage />
             </MainLayout>
           </ProtectedRoute>
         } 
@@ -198,18 +201,23 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <UserProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </UserProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Fix window reference check to work in SSR environments
+  const isBrowser = typeof window !== 'undefined';
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UserProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </UserProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
